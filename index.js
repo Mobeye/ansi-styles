@@ -1,4 +1,27 @@
 'use strict';
+var colorConvert = require('color-convert');
+
+function wrapAnsi16(fn, offset) {
+	return function () {
+		var code = fn.apply(colorConvert, arguments);
+		return '\u001b[' + (code + offset) + 'm';
+	};
+}
+
+function wrapAnsi256(fn, offset) {
+	return function () {
+		var code = fn.apply(colorConvert, arguments);
+		return '\u001b[' + (38 + offset) + ';5;' + code + 'm';
+	};
+}
+
+function wrapAnsi16m(fn, offset) {
+	return function () {
+		var rgb = fn.apply(colorConvert, arguments);
+		return '\u001b[' + (38 + offset) + ';2;' +
+			rgb[0] + ';' + rgb[1] + ';' + rgb[2] + 'm';
+	};
+}
 
 function assembleStyles () {
 	var styles = {
@@ -55,6 +78,38 @@ function assembleStyles () {
 			enumerable: false
 		});
 	});
+
+	styles.color = {
+		ansi16: {},
+		ansi256: {},
+		ansi16m: {}
+	};
+
+	styles.bgColor = {
+		ansi16: {},
+		ansi256: {},
+		ansi16m: {}
+	};
+
+	for (var key in colorConvert) {
+		var fn = colorConvert[key];
+		var conversion = key.replace(/^([^2]+).+$/, '$1');
+		if (/2ansi16$/.test(key)) {
+			styles.color.ansi16[conversion] = wrapAnsi16(fn, 0);
+			styles.bgColor.ansi16[conversion] = wrapAnsi16(fn, 10);
+			continue;
+		}
+		if (/2ansi$/.test(key)) {
+			styles.color.ansi256[conversion] = wrapAnsi256(fn, 0);
+			styles.bgColor.ansi256[conversion] = wrapAnsi256(fn, 10);
+			continue;
+		}
+		if (/2rgb$/.test(key)) {
+			styles.color.ansi16m[conversion] = wrapAnsi16m(fn, 0);
+			styles.bgColor.ansi16m[conversion] = wrapAnsi16m(fn, 10);
+			continue;
+		}
+	}
 
 	return styles;
 }
