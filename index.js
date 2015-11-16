@@ -59,7 +59,7 @@ function assembleStyles () {
 	return styles;
 }
 
-Object.defineProperty(module, 'exports', {
-	enumerable: true,
-	get: assembleStyles
-});
+// Object.defineProperty(module, 'exports', {
+// 	enumerable: true,
+// 	get: assembleStyles
+// });
